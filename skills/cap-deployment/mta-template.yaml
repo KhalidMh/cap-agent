@@ -1,0 +1,51 @@
+_schema-version: "3.1"
+ID: my-cap-app
+version: 1.0.0
+description: SAP CAP Application
+
+parameters:
+  enable-parallel-deployments: true
+
+build-parameters:
+  before-all:
+    - builder: custom
+      commands:
+        - npm ci
+        - npx cds build --production
+
+modules:
+  - name: my-cap-app-srv
+    type: nodejs
+    path: gen/srv
+    parameters:
+      buildpack: nodejs_buildpack
+      memory: 256M
+    requires:
+      - name: my-cap-app-auth
+      - name: my-cap-app-db
+    provides:
+      - name: srv-api
+        properties:
+          srv-url: ${default-url}
+
+  - name: my-cap-app-db-deployer
+    type: hdb
+    path: gen/db
+    parameters:
+      buildpack: nodejs_buildpack
+    requires:
+      - name: my-cap-app-db
+
+resources:
+  - name: my-cap-app-auth
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: xsuaa
+      service-plan: application
+      path: ./xs-security.json
+
+  - name: my-cap-app-db
+    type: com.sap.xs.hdi-container
+    parameters:
+      service: hana
+      service-plan: hdi-shared
