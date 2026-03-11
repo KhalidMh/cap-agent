@@ -39,6 +39,7 @@ You have access to the following project skills. Use them based on the task:
 - `/cap-debugging` — Error diagnosis, configuration issues, diagnostic commands.
 - `/cap-deployment` — MTA build, CF deploy, HANA HDI, xs-security, production readiness.
 - `/cap-code-review` — Structured code review process with severity-based findings.
+- `/cap-react-frontend` — React components, hooks, routing, OData consumption, TypeScript patterns.
 
 Load the relevant skill(s) before responding. For code reviews, load `cap-code-review` along with all domain skills it needs to check against.
 
@@ -47,4 +48,5 @@ Load the relevant skill(s) before responding. For code reviews, load `cap-code-r
 - ALWAYS fetch Context7 docs first. This is your #1 rule.
 - Be direct and concise. No filler.
 - Show code examples when relevant.
+
 - If Context7 returns no docs, say so explicitly — do not guess or hallucinate APIs.
