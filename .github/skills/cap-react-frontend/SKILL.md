@@ -32,7 +32,7 @@ app/
 │   └── main.tsx
 ├── tsconfig.json
 ├── package.json
-└── vite.config.ts        # or equivalent bundler config
+└── vite.config.ts
 ```
 
 ## TypeScript Conventions
@@ -48,21 +48,21 @@ app/
 - Use **functional components** only — no class components.
 - Prefer named exports over default exports for components.
 - Keep components small — extract logic into custom hooks.
-- Co-locate component-specific types in the same file if not shared.
-- Use `React.FC` sparingly — prefer explicit props typing:
+- Prefer explicit props typing over `React.FC`:
 
 ```tsx
 interface ProductCardProps {
   name: string;
   price: number;
+  currency: string;
   onSelect: (id: string) => void;
 }
 
-export function ProductCard({ name, price, onSelect }: ProductCardProps) {
+export function ProductCard({ name, price, currency, onSelect }: ProductCardProps) {
   return (
-    <div onClick={() => onSelect(name)}>
+    <div onClick={() => onSelect(name)} role="button" tabIndex={0}>
       <h3>{name}</h3>
-      <span>{price}</span>
+      <span>{price} {currency}</span>
     </div>
   );
 }
@@ -73,7 +73,31 @@ export function ProductCard({ name, price, onSelect }: ProductCardProps) {
 - Prefix custom hooks with `use` (e.g. `useProducts`, `useAuth`).
 - Keep hooks in `src/hooks/`.
 - Never call hooks conditionally.
-- Extract data fetching into custom hooks — keep components presentational.
+- Extract data fetching into custom hooks:
+
+```tsx
+// src/hooks/useProducts.ts
+import { useState, useEffect } from 'react';
+import { getProducts } from '../services/products';
+import type { Product } from '../types/product';
+
+export function useProducts() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    getProducts()
+      .then(data => { if (!cancelled) setProducts(data); })
+      .catch(err => { if (!cancelled) setError(err); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, []);
+
+  return { products, loading, error };
+}
+```
 
 ## Routing (React Router)
 
@@ -84,29 +108,70 @@ export function ProductCard({ name, price, onSelect }: ProductCardProps) {
 
 ## Consuming CAP OData Services
 
-The React frontend communicates with the CAP backend via OData V4 (or REST if configured).
+The React frontend communicates with the CAP backend via OData V4.
 
 - Create API client functions in `src/services/`.
 - Use the AppRouter's proxy path (e.g. `/odata/v4/catalog/`) — never hardcode full backend URLs.
-- Handle OData error responses (`error.message` from the JSON body).
+- Handle OData error responses.
 - Type all API responses with TypeScript interfaces matching CDS entities.
 
 ```tsx
 // src/services/products.ts
+import type { Product } from '../types/product';
+
 const BASE = '/odata/v4/catalog';
 
-export async function getProducts(): Promise<Product[]> {
-  const res = await fetch(`${BASE}/Products`);
-  if (!res.ok) throw new Error(`Failed to fetch products: ${res.status}`);
+export async function getProducts(top = 50, skip = 0): Promise<Product[]> {
+  const res = await fetch(`${BASE}/Products?$top=${top}&$skip=${skip}`);
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(body?.error?.message ?? `Failed: ${res.status}`);
+  }
   const data = await res.json();
   return data.value;
 }
 
 export async function getProduct(id: string): Promise<Product> {
   const res = await fetch(`${BASE}/Products(${id})`);
-  if (!res.ok) throw new Error(`Product not found: ${res.status}`);
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(body?.error?.message ?? `Not found: ${res.status}`);
+  }
   return res.json();
 }
+
+export async function createProduct(product: Omit<Product, 'ID'>): Promise<Product> {
+  const res = await fetch(`${BASE}/Products`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(product),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(body?.error?.message ?? `Create failed: ${res.status}`);
+  }
+  return res.json();
+}
+```
+
+## Vite Proxy for Local Dev
+
+```ts
+// vite.config.ts
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    proxy: {
+      '/odata': {
+        target: 'http://localhost:4004',
+        changeOrigin: true,
+      },
+    },
+  },
+});
 ```
 
 ## State Management
@@ -130,3 +195,4 @@ export async function getProduct(id: string): Promise<Product> {
 - Massive components (200+ lines) — split into smaller pieces.
 - Business logic in components — move to hooks or `src/utils/`.
 - `index.tsx` files that re-export everything — keep imports explicit.
+- Missing cleanup in `useEffect` (race conditions on unmount).
