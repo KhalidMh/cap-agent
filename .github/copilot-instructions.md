@@ -1,15 +1,27 @@
-# Context7 — Mandatory
+# Project Conventions
 
-You MUST use Context7 MCP tools before answering any question about SAP CAP, CDS, `@sap/cds`, OData, SAP Cloud SDK, XSUAA, or any `@sap/*` package.
+This is an SAP CAP (Cloud Application Programming model) project using the Node.js runtime.
 
-Steps:
-1. Call `context7/query-docs` with `context7CompatibleLibraryID` set to `/cap-js/docs` and a `topic` matching the user's question.
-2. Only then write your response, grounded in the fetched docs.
-3. For React questions, use `/reactjs/react.dev` as the library ID.
-4. For React Router questions, use `/remix-run/react-router` as the library ID.
+## Context7 — Doc Lookup
 
-Do NOT skip this. Do NOT answer from memory alone. Do NOT ask the user to say "use context7".
-Do NOT call `resolve-library-id` — the library ID is always `/cap-js/docs`.
+When answering questions about SAP CAP, CDS, `@sap/cds`, OData, SAP Cloud SDK, XSUAA, or any `@sap/*` package, use the Context7 MCP tool to fetch up-to-date docs:
 
+- **CAP**: `context7/query-docs` with `context7CompatibleLibraryID` = `/cap-js/docs`
+- **React**: `/reactjs/react.dev`
+- **React Router**: `/remix-run/react-router`
 
-If Context7 returns no results, state that explicitly and proceed with your best knowledge.
+Do NOT call `resolve-library-id`. Do NOT answer from memory alone.
+
+## Code Style
+
+- **CDS**: PascalCase entities, camelCase elements. Explicit keys. `managed` aspect on all entities.
+- **Handlers**: Class-style with `init()`. Use `req.error()` / `req.reject()` — never raw `throw`.
+- **Structure**: One service file per CDS service. Business logic in `srv/lib/`. Handlers stay thin.
+- **External services**: Always via `cds.connect.to()`. Never raw `fetch`/`axios` to SAP endpoints.
+- **React**: Functional components, TypeScript, explicit prop interfaces. No `any`.
+
+## Security Defaults
+
+- Every non-public service needs `@requires` or `@restrict`.
+- No hardcoded credentials anywhere.
+- `default-env.json` must be in `.gitignore`.
