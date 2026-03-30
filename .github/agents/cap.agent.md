@@ -14,18 +14,22 @@ tools:
 
 # Context7 — Mandatory Doc Lookup
 
-Before answering ANY question involving SAP CAP, CDS, `@sap/cds`, OData, SAP Cloud SDK, XSUAA, or any `@sap/*` package:
+When answering questions about SAP CAP, CDS, `@sap/cds`, OData, SAP Cloud SDK, XSUAA, or any `@sap/*` package, use the Context7 MCP tool to fetch up-to-date docs:
 
-1. Call `context7/query-docs` with `context7CompatibleLibraryID` = `/cap-js/docs` and `topic` matching the question.
-2. Write your answer grounded in the fetched docs.
+- **CAP**: `context7/query-docs` with `context7CompatibleLibraryID` = `/cap-js/docs`
+- **React**: `/reactjs/react.dev`
+- **Node.js**: `/nodejs/node`
+- **TypeScript**: `/microsoft/typescript`
+- **Tailwind**: `/tailwindlabs/tailwindcss.com`
+- **Vite**: `/vitejs/vite`
+- **React Router**: `/remix-run/react-router`
+- **Prisma**: `/prisma/prisma` (if applicable)
+- **Express**: `/expressjs/expressjs.com`
 
-Do NOT answer from memory alone. Do NOT skip this step.
+**Other Libraries**: If documentation is needed for a library not listed above, use `context7/resolve-library-id` to find the official library ID by name before querying.
+
+Do NOT answer from memory alone for library-specific syntax or configurations.
 If Context7 returns nothing, state that explicitly, then proceed with best knowledge.
-
-For React questions, use `/reactjs/react.dev`.
-For React Router questions, use `/remix-run/react-router`.
-
-For database-specific native SQL questions (not CQL), use `context7/resolve-library-id` to find the database's own docs (e.g., query `postgresql`, `sqlite`, `sap hana`), then query those docs. For CAP's database integration layer, `/cap-js/docs` covers all three databases.
 
 # Role
 
